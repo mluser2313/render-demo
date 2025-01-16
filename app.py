@@ -2,50 +2,44 @@ import pickle
 import joblib
 import numpy as np
 import xgboost as xgb
-from flask import Flask, request, render_template
+from flask import Flask, request, jsonify  # Import jsonify for returning JSON response
 
-# Load the trained XGBoost model
-model = joblib.load('xgboost_aqi_model1.pkl')  # Load the trained XGBoost model
+# Load the trained XGBoost model and scaler
+model = joblib.load('xgboost_aqi_model1.pkl')
+scaler_features = joblib.load('scaler_features.pkl')
+scaler_target = joblib.load('scaler_target.pkl')
 
-# Load the feature scaler
-scaler_features = joblib.load('scaler_features.pkl')  # Load the feature scaler
-
-# Load the target scaler
-scaler_target = joblib.load('scaler_target.pkl')  # Load the target scaler
-
-# Initialize Flask app
 app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Extract input values from the form
-    clouds = float(request.form['Clouds %'])
-    humidity = float(request.form['Humidity'])
-    rain = float(request.form['Rain'])
-    temperature = float(request.form['Temperature'])
-    wind_speed = float(request.form['Wind Speed'])
+    # Extract JSON data from the request
+    data = request.get_json()
 
-    # Create an array with the features (input data)
+    # Get features from the data
+    clouds = data.get('Clouds %')
+    humidity = data.get('Humidity')
+    rain = data.get('Rain')
+    temperature = data.get('Temperature')
+    wind_speed = data.get('Wind Speed')
+
+    # Create the features array
     features = np.array([[clouds, humidity, rain, temperature, wind_speed]])
 
-    # Normalize the features using the saved scaler
+    # Normalize the features
     features_scaled = scaler_features.transform(features)
 
-    # Convert the features to DMatrix format for XGBoost
+    # Convert to DMatrix for XGBoost
     features_dmatrix = xgb.DMatrix(features_scaled)
 
-    # Make prediction with the trained model
+    # Predict AQI
     prediction = model.predict(features_dmatrix)
 
-    # Inverse transform the predicted AQI
+    # Inverse transform the prediction
     prediction_actual = scaler_target.inverse_transform(prediction.reshape(-1, 1))
 
-    # Display the result
-    return render_template('index.html', prediction_text='Predicted AQI: {:.2f}'.format(prediction_actual[0][0]))
+    # Return the prediction as JSON
+    return jsonify({'predicted_aqi': prediction_actual[0][0]})
 
 if __name__ == "__main__":
     app.run(debug=True)
