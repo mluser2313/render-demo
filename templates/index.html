@@ -9,14 +9,16 @@
             font-family: 'Arial', sans-serif;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
+            height: 100vh;
             background: linear-gradient(120deg, #4e54c8, #8f94fb);
             background-size: 400% 400%;
             animation: gradientAnimation 10s ease infinite;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow-y: auto;
+            justify-content: center;
+            overflow: hidden;
+            scroll-behavior: smooth;
         }
 
         @keyframes gradientAnimation {
@@ -29,16 +31,16 @@
             color: #fff;
             font-size: 40px;
             text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-            margin: 20px 0;
+            margin-bottom: 30px;
+            font-family: 'Roboto', sans-serif;
         }
 
         .data-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr; /* Two columns */
             gap: 20px;
             max-width: 900px;
             width: 90%;
-            margin-bottom: 30px;
         }
 
         .data-card {
@@ -51,97 +53,104 @@
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(10px);
         }
 
         .data-card:hover {
             transform: translateY(-12px);
             box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
             background-color: rgba(255, 255, 255, 1);
+            filter: brightness(1.2);
         }
 
         .data-card h2 {
             font-size: 22px;
             color: #555;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
 
         .data-card span {
             font-size: 30px;
             color: #ff5722;
             font-weight: bold;
+            transition: color 0.4s ease;
+        }
+
+        .data-card:hover span {
+            color: #e91e63;
+            text-shadow: 0 0 10px rgba(233, 30, 99, 0.5);
+        }
+
+        .tooltip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 15px;
+            box-sizing: border-box;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s ease-out;
+        }
+
+        .data-card:hover .tooltip {
+            opacity: 1;
+            transform: scale(1.05);
         }
 
         .footer {
-            margin: 20px 0;
+            margin-top: 40px;
             font-size: 14px;
             color: #fff;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
         }
 
-        /* Form container styles */
-        .form-container {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            padding: 20px;
+        /* AQI Bar Container - position next to AQI box */
+        .aqi-bar-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            width: 100%;
             max-width: 400px;
-            width: 90%;
-            margin-bottom: 30px;
+            margin-top: 20px;
         }
 
-        .form-container h2 {
-            font-size: 24px;
-            color: #555;
-            margin-bottom: 20px;
+        .aqi-bar-inner {
+            height: 20px;
+            width: 0%; /* Default width */
+            border-radius: 10px;
+            transition: width 0.4s, background-color 0.4s ease;
         }
 
-        .form-container form {
+        .aqi-bar-inner.good {
+            background-color: #4caf50; /* Green for good air quality */
+        }
+
+        .aqi-bar-inner.moderate {
+            background-color: #ffeb3b; /* Yellow for moderate air quality */
+        }
+
+        .aqi-bar-inner.unhealthy {
+            background-color: #f44336; /* Red for unhealthy air quality */
+        }
+
+        .aqi-bar-inner.hazardous {
+            background-color: #9c27b0; /* Purple for hazardous air quality */
+        }
+
+        .data-card-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-        }
-
-        .form-container label {
-            font-size: 16px;
-            color: #555;
-        }
-
-        .form-container input[type="number"] {
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            font-size: 14px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .form-container input[type="submit"] {
-            padding: 10px 20px;
-            background-color: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .form-container input[type="submit"]:hover {
-            background-color: #45a049;
-        }
-
-        .form-container .result {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #333;
-        }
-
-        /* Ensure body is scrollable */
-        html, body {
-            height: auto;
-        }
-
-        .data-container, .form-container {
-            width: 100%;
-            max-width: 600px;
         }
     </style>
 	<script type="module" src="firebase.js"></script>
@@ -149,53 +158,71 @@
 <body>
     <h1>Air Quality Dashboard</h1>
     <div class="data-container">
-        <div class="data-card">
-            <h2>AQI</h2>
-            <span id="aqi">120</span>
+        <div class="data-card-container">
+            <div class="data-card">
+                <h2>AQI</h2>
+                <span id="aqi">120</span> <!-- Dynamically set the AQI value here -->
+                <div class="tooltip">Air Quality Index (AQI) reflects overall air pollution levels.</div>
+            </div>
+            <!-- AQI Bar placed next to the AQI box -->
+            <div class="aqi-bar-container">
+                <div id="aqi-bar-inner" class="aqi-bar-inner"></div>
+            </div>
         </div>
         <div class="data-card">
             <h2>PM2.5</h2>
             <span id="pm25">Loading...</span> µg/m³
+            <div class="tooltip">PM2.5: Fine particles ≤2.5 µm, harmful to lungs and heart.</div>
         </div>
         <div class="data-card">
             <h2>PM10</h2>
             <span id="pm10">Loading...</span> µg/m³
+            <div class="tooltip">PM10: Particulate matter ≤10 µm, affecting the respiratory system.</div>
         </div>
         <div class="data-card">
             <h2>CO</h2>
             <span id="co">Loading...</span> ppm
+            <div class="tooltip">Carbon Monoxide: Harmful colorless gas from burning fuels.</div>
         </div>
         <div class="data-card">
             <h2>SO2</h2>
             <span id="so2">Loading...</span> ppb
+            <div class="tooltip">Sulfur Dioxide: Gas from fossil fuels, causes respiratory irritation.</div>
         </div>
     </div>
 
-    <div class="form-container">
-        <h2>AQI Prediction</h2>
-        <form action="/predict" method="post">
-            <label for="Clouds">Clouds %:</label>
-            <input type="number" step="0.01" name="Clouds %" required>
-            
-            <label for="Humidity">Humidity:</label>
-            <input type="number" step="0.01" name="Humidity" required>
-            
-            <label for="Rain">Rain:</label>
-            <input type="number" step="0.01" name="Rain" required>
-            
-            <label for="Temperature">Temperature:</label>
-            <input type="number" step="0.01" name="Temperature" required>
-            
-            <label for="Wind_Speed">Wind Speed:</label>
-            <input type="number" step="0.01" name="Wind Speed" required>
-            
-            <input type="submit" value="Predict">
-        </form>
-        {% if prediction_text %}
-        <div class="result">{{ prediction_text }}</div>
-        {% endif %}
-    </div>
-
     <div class="footer">Powered by Firebase Realtime Database</div>
+
+    <script>
+        // Function to update AQI bar based on AQI value
+        function updateAQIBar() {
+            let aqiValue = parseInt(document.getElementById('aqi').textContent); // Get AQI value from the span
+            let aqiBarInner = document.getElementById('aqi-bar-inner');
+
+            let barWidth = Math.min(aqiValue, 500); // Max width of 100% for 500 AQI
+            aqiBarInner.style.width = barWidth + '%'; // Update bar width
+
+            // Apply color classes based on AQI value
+            aqiBarInner.classList.remove('good', 'moderate', 'unhealthy', 'hazardous'); // Reset previous classes
+            if (aqiValue <= 50) {
+                aqiBarInner.classList.add('good');
+            } else if (aqiValue <= 100) {
+                aqiBarInner.classList.add('moderate');
+            } else if (aqiValue <= 200) {
+                aqiBarInner.classList.add('unhealthy');
+            } else {
+                aqiBarInner.classList.add('hazardous');
+            }
+        }
+
+        // Call the function to update the AQI bar when the page loads
+        updateAQIBar();
+
+        // For demonstration: Update AQI dynamically
+        setTimeout(() => {
+            document.getElementById('aqi').textContent = 180; // Change AQI value dynamically
+            updateAQIBar(); // Update AQI bar with the new value
+        }, 5000); // Change after 5 seconds for demonstration
+    </script>
 </body>
 </html>
