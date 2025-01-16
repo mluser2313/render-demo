@@ -11,6 +11,10 @@ scaler_target = joblib.load('scaler_target.pkl')
 
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return render_template('index.html')
+    
 @app.route('/predict', methods=['POST'])
 def predict():
     # Extract JSON data from the request
