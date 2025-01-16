@@ -23,11 +23,11 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     # Extract input values from the form
-    clouds = float(request.form['Clouds %'])
+    clouds = float(request.form['Clouds'])
     humidity = float(request.form['Humidity'])
     rain = float(request.form['Rain'])
     temperature = float(request.form['Temperature'])
-    wind_speed = float(request.form['Wind Speed'])
+    wind_speed = float(request.form['Wind'])
 
     # Create an array with the features (input data)
     features = np.array([[clouds, humidity, rain, temperature, wind_speed]])
